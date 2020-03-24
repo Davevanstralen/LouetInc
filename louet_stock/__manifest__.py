@@ -38,6 +38,7 @@ Shipping Contact Details:-  it-support@sfi.ca
     'data': [
         # 'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
+        'views/stock_views.xml',
     ],
     'license': 'OEEL-1',
 }
