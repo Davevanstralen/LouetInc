@@ -32,7 +32,7 @@ Shipping Contact Details:-  it-support@sfi.ca
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['stock'],
+    'depends': ['stock', 'sale'],
 
     # always loaded
     'data': [

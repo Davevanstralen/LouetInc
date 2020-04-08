@@ -3,16 +3,22 @@
 
 import csv
 import base64
+import logging
 
 from odoo import api, fields, models, _
 from datetime import datetime, timedelta
+from .ftp_connection import FTPConnection
+
+_logger = logging.getLogger(__name__)
 
 
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
     def _prepare_procurement_values(self):
-        return super(StockMove, self)._prepare_procurement_values().update({'sale_line_id': self.sale_line_id.id})
+        res = super(StockMove, self)._prepare_procurement_values()
+        res.update({'sale_line_id': self.sale_line_id.id})
+        return res
 
 
 class PickingType(models.Model):
@@ -25,13 +31,23 @@ class PickingType(models.Model):
 class Picking(models.Model):
     _inherit = 'stock.picking'
 
+    delivery_number = fields.Char(string='Delivery number',
+                                  help='Delivery Number from Shipping Broker')
+    carrier_name = fields.Char(string='Carrier Name',
+                               help='Carrier Name from Shipping Broker')
+
+    def check_if_production(self):
+        # Check for both production db name and enterprise code set
+        if self.env.cr.dbname == 'davevanstralen-louetinc-production-770941' and\
+                self.env['ir.config_parameter'].sudo().get_param('database.enterprise_code'):
+            # if self.env.cr.dbname == 'louet_v13' and self.env['ir.config_parameter'].sudo().get_param('database.enterprise_code'):
+            return 'Production'
+        return 'Test'
+
     def create_csv_data(self):
         sale_id = self.group_id.sale_id
-
         rows = []
-
         for line in self.move_line_ids_without_package:
-            test_price = line.move_id.sale_line_id
             rows.append({'number': self.name or '',
                          # 'date': sale_id.date_order,
                          # 'sales_order_number': sale_id.name,
@@ -67,13 +83,13 @@ class Picking(models.Model):
                          'bill_freight_to_country': sale_id.partner_shipping_id.country_id.name or '',
                          # 'ship_by_date': '',
                          'deliver_by_date': sale_id.commitment_date or '',
-                         'line_number': line.id or '',
+                         'line_number': lincorrespondinge.id or '',
                          'part_number': line.product_id.name or '',
                          'part_description': line.product_id.default_code or '',
                          'quantity_ordered': line.qty_done,
                          # 'quantity_shiped': '',
                          'unit_price': line.move_id.sale_line_id.price_unit,
-                         'database_type': 'Test'})
+                         'database_type': self.check_if_production()})
         return rows
 
     # Create xls file for broker report
@@ -108,3 +124,58 @@ class Picking(models.Model):
             'type': 'binary',  # override default_type from context, possibly meant for another model!
         })
         print(attachment)
+        return attachment
+
+    def export_ftp_report(self, attachment_id):
+        host = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_host_broker')
+        port = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_port_broker')
+        login = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_login_broker')
+        password = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_password_broker')
+
+        #TODO: get target dir from TOD
+        traget_path = 'SOME FOLDER'
+
+        config = {'host': host,
+                  'port': port,
+                  'login': login,
+                  'password': password,
+                  'repin': '/',
+                  }
+
+        conn = FTPConnection(config)
+
+        conn._connect()
+        conn.cd(traget_path)
+        if attachment_id:
+            # get attachment name
+            filename = attachment_id.datas_fname
+
+            with open(str(filename), "w") as fh:
+                fh.write(base64.b64decode(attachment_id.datas))
+            conn._conn.put(filename, traget_path + '/' + filename)
+        conn._disconnect()
+        return True
+
+    def action_done(self):
+        res = super(Picking, self).action_done()
+        for pick in self:
+            if pick.picking_type_id.send_email:
+                attachment_id = pick.create_broker_report()
+                # email_sub = '{company} Shipping CSV {date}'.format(company=self.company_id.name,
+                #                                                           date=datetime.now().strftime("%Y-%m-%d"))
+                # vals = {'email_to': self.env['ir.config_parameter'].sudo().get_param('louet_stock.default_broker_email'),
+                #         'body_html': 'Broker Shipping Report CSV',
+                #         'subject': email_sub,
+                #         'attachment_ids': [(6, 0, [report_id.id])]
+                #         }
+                # print(vals)
+                # try:
+                #     report_email = self.env['mail.mail'].create(vals)
+                #     report_email.send()
+                # except Exception:
+                #     _logger.warn("Failed to send email'%s' (email id %d) but picking(id %d) still validated.",
+                #                  email_sub, report_email.id, self.id)
+                # if attachment_id:
+                #     pick.export_ftp_report(attachment_id)
+
+        return res
