@@ -19,7 +19,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='extra']//group[1]" position="inside">
                     <group string="Broker Shipping Information">
-                        <field name="delivery_number"/>
+<!--                        <field name="delivery_number"/>-->
                         <field name="carrier_name"/>
                     </group>
                 </xpath>

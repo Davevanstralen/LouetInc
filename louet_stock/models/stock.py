@@ -2,12 +2,16 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import csv
+import xlrd
 import base64
 import logging
+import os
+import pysftp
+from tempfile import TemporaryDirectory
 
 from odoo import api, fields, models, _
 from datetime import datetime, timedelta
-from .ftp_connection import FTPConnection
+from odoo.tools.float_utils import float_round
 
 _logger = logging.getLogger(__name__)
 
@@ -24,21 +28,21 @@ class StockMove(models.Model):
 class PickingType(models.Model):
     _inherit = 'stock.picking.type'
 
-    send_email = fields.Boolean(string='Send Broker Email',
-                                help='Check to enable sending broker email at validation of transfer with this operation type')
+    send_email = fields.Boolean(string='Send Broker File',
+                                help='Check to enable sending broker File over SFTP at validation of transfer with this operation type')
 
 
 class Picking(models.Model):
     _inherit = 'stock.picking'
 
-    delivery_number = fields.Char(string='Delivery number',
-                                  help='Delivery Number from Shipping Broker')
     carrier_name = fields.Char(string='Carrier Name',
                                help='Carrier Name from Shipping Broker')
+    broker_received = fields.Boolean(string='Broker Shipping Received',
+                                     help='Will be set to True when file is read from Broker stating shipping information.')
 
     def check_if_production(self):
         # Check for both production db name and enterprise code set
-        if self.env.cr.dbname == 'davevanstralen-louetinc-production-770941' and\
+        if self.env.cr.dbname == 'davevanstralen-louetinc-production-770941' and \
                 self.env['ir.config_parameter'].sudo().get_param('database.enterprise_code'):
             # if self.env.cr.dbname == 'louet_v13' and self.env['ir.config_parameter'].sudo().get_param('database.enterprise_code'):
             return 'Production'
@@ -83,7 +87,7 @@ class Picking(models.Model):
                          'bill_freight_to_country': sale_id.partner_shipping_id.country_id.name or '',
                          # 'ship_by_date': '',
                          'deliver_by_date': sale_id.commitment_date or '',
-                         'line_number': lincorrespondinge.id or '',
+                         'line_number': line.id or '',
                          'part_number': line.product_id.name or '',
                          'part_description': line.product_id.default_code or '',
                          'quantity_ordered': line.qty_done,
@@ -118,7 +122,6 @@ class Picking(models.Model):
         attachment = self.env['ir.attachment'].create({
             'name': filename,
             'datas': file_base64,
-            'store_fname': filename,
             'res_model': 'stock.picking',
             'res_id': self.id,
             'type': 'binary',  # override default_type from context, possibly meant for another model!
@@ -126,56 +129,132 @@ class Picking(models.Model):
         print(attachment)
         return attachment
 
+    def get_ftp_config(self):
+        return {'host': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_host_broker'),
+                'port': int(self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_port_broker')),
+                'login': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_login_broker'),
+                'password': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_password_broker'),
+                'repin': '/',
+                }
+
     def export_ftp_report(self, attachment_id):
-        host = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_host_broker')
-        port = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_port_broker')
-        login = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_login_broker')
-        password = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_password_broker')
+        target_path = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_dir_export')
+        config = self.get_ftp_config()
 
-        #TODO: get target dir from TOD
-        traget_path = 'SOME FOLDER'
+        myHostname = config.get('host')
+        myUsername = config.get('login')
+        myPassword = config.get('password')
+        try:
+            with pysftp.Connection(myHostname, username=myUsername, password=myPassword) as sftp:
+                directory_structure = sftp.listdir_attr()
+                for attr in directory_structure:
+                    print(attr.filename, attr)
+                print(sftp.pwd)
+                sftp.cwd(target_path)
+                print(sftp.pwd)
+                if attachment_id:
+                    # get attachment name
+                    filename = attachment_id.name
 
-        config = {'host': host,
-                  'port': port,
-                  'login': login,
-                  'password': password,
-                  'repin': '/',
-                  }
-
-        conn = FTPConnection(config)
-
-        conn._connect()
-        conn.cd(traget_path)
-        if attachment_id:
-            # get attachment name
-            filename = attachment_id.datas_fname
-
-            with open(str(filename), "w") as fh:
-                fh.write(base64.b64decode(attachment_id.datas))
-            conn._conn.put(filename, traget_path + '/' + filename)
-        conn._disconnect()
+                    with open(str(filename), "wb") as fh:
+                        fh.write(base64.b64decode(attachment_id.datas))
+                    try:
+                        sftp.put(filename, preserve_mtime=True)
+                    except Exception:
+                        _logger.warn("Failed to export '%s' from transfer '%s' but is still validated.",
+                                     attachment_id.name, self.id)
+        except Exception:
+            _logger.warn("Unable to connect to SFTP Server at '%s' with user '%s'. Transfer still validated.",
+                         myHostname, myUsername)
         return True
 
     def action_done(self):
+        #TODO: new picking will be created when Shipping cost is add, how to handle this case for TOD
         res = super(Picking, self).action_done()
         for pick in self:
             if pick.picking_type_id.send_email:
                 attachment_id = pick.create_broker_report()
-                # email_sub = '{company} Shipping CSV {date}'.format(company=self.company_id.name,
-                #                                                           date=datetime.now().strftime("%Y-%m-%d"))
-                # vals = {'email_to': self.env['ir.config_parameter'].sudo().get_param('louet_stock.default_broker_email'),
-                #         'body_html': 'Broker Shipping Report CSV',
-                #         'subject': email_sub,
-                #         'attachment_ids': [(6, 0, [report_id.id])]
-                #         }
-                # print(vals)
-                # try:
-                #     report_email = self.env['mail.mail'].create(vals)
-                #     report_email.send()
-                # except Exception:
-                #     _logger.warn("Failed to send email'%s' (email id %d) but picking(id %d) still validated.",
-                #                  email_sub, report_email.id, self.id)
-                # if attachment_id:
-                #     pick.export_ftp_report(attachment_id)
-
+                if attachment_id:
+                    pick.export_ftp_report(attachment_id)
         return res
+
+    def create_shipping_cost_SOL(self, sale_order_id, product_id, shipping_cost, delivery_order_id):
+        rounding = self.env.company.currency_id.decimal_places
+
+        amount_untaxed = amount_tax = 0.0
+        for line in sale_order_id.order_line.filtered(lambda l: l.product_id != product_id):
+            amount_untaxed += line.price_subtotal
+            amount_tax += line.price_tax
+
+        no_ship_total = amount_untaxed + amount_tax
+
+        order_line_id = self.env['sale.order.line'].create([{
+            "order_id": sale_order_id.id,
+            "product_id": product_id.id,
+            # Shipping Cost Line item =  Cost Returned by Shipping Broker + $3.00 (fixed)  + (0.01 * order value without shipping)
+            "price_unit": float_round(shipping_cost + 3.00 + (0.01 * no_ship_total), precision_rounding=rounding)
+        }])
+        if order_line_id:
+            # after successful shipping charge and read, change boolean to true to avoid duplicates
+            delivery_order_id.broker_received = True
+            delivery_order_id.message_post(body=_('Your shipment request has been successfully received.'))
+
+    def process_broker_order(self, data):
+        for do in data:
+            do_name = do.get('Order', False)
+            if do_name:
+                # Only get DO which match name and have not been read
+                delivery_order_id = self.env['stock.picking'].search(
+                    [['name', '=', str(do_name)], ['broker_received', '=', False]], limit=1)
+                if delivery_order_id:
+                    delivery_order_id.carrier_tracking_ref = str(do.get('Shipment_ID', ''))
+                    delivery_order_id.carrier_name = str(do.get('Carrier', ''))
+
+                    sale_order_id = delivery_order_id.sale_id
+                    product_id = self.env['product.product'].search([['is_broker_ship', '=', True]], limit=1)
+                    shipping_cost = do.get('Published_Cost', 0.0)
+
+                    if sale_order_id and product_id:
+                        self.create_shipping_cost_SOL(sale_order_id, product_id, shipping_cost, delivery_order_id)
+                    else:
+                        _logger.warning(_(
+                            'No Sale Order Line with additional shipping cost added to %s from Broker Shipping Import because no Sale Order or product associated.'),
+                                        delivery_order_id.name)
+                else:
+                    _logger.warning(
+                        _('No Delivery Order with Name,%s, found. Shipping Broker information not imported'), do_name)
+
+    @api.model
+    def get_broker_files(self):
+        target_path = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_dir_import')
+        config = self.get_ftp_config()
+
+        myHostname = config.get('host')
+        myUsername = config.get('login')
+        myPassword = config.get('password')
+        with TemporaryDirectory() as temp_dir:
+            try:
+                with pysftp.Connection(myHostname, username=myUsername, password=myPassword) as sftp:
+                    print(sftp.pwd)
+                    sftp.get_d(target_path, temp_dir, preserve_mtime=True)
+            except Exception:
+                _logger.warning(_('Connection failed to %s with User, %s,from Broker Shipping SFTP.'), myHostname, myUsername)
+
+            print(os.listdir(temp_dir))
+            for filename in os.listdir(temp_dir):
+                workbook = xlrd.open_workbook(os.path.join(temp_dir, filename))
+                sheet = workbook.sheet_by_index(0)
+
+                header_row = []
+                for col in range(sheet.ncols):
+                    header_row.append(sheet.cell_value(0, col))
+
+                # list of 'rows' data, dictionary with keys as header values
+                data = []
+                for row in range(1, sheet.nrows):
+                    value = {}
+                    for col in range(sheet.ncols):
+                        value[header_row[col]] = sheet.cell_value(row, col)
+                    data.append(value)
+                self.process_broker_order(data)
+        return True
