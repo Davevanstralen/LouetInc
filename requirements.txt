@@ -1,4 +1,1 @@
-mws
-clint
-pysftp
-tempfile
+pysftp == 0.2.9
