@@ -99,7 +99,7 @@ class Picking(models.Model):
     # Create xls file for broker report
     def create_broker_report(self):
         report_name = '{company}_{transfer}_shipping_{date}'.format(company=self.company_id.name,
-                                                                    transfer=self.name,
+                                                                    transfer=self.name.replace('/', ''),
                                                                     date=datetime.now().strftime("%Y_%m_%d"))
         filename = "%s.%s" % (report_name, "csv")
         print(filename)
