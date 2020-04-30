@@ -98,8 +98,9 @@ class Picking(models.Model):
 
     # Create xls file for broker report
     def create_broker_report(self):
-        report_name = '{company}_shipping_{date}'.format(company=self.company_id.name,
-                                                         date=datetime.now().strftime("%Y_%m_%d"))
+        report_name = '{company}_{transfer}_shipping_{date}'.format(company=self.company_id.name,
+                                                                    transfer=self.name,
+                                                                    date=datetime.now().strftime("%Y_%m_%d"))
         filename = "%s.%s" % (report_name, "csv")
         print(filename)
 
@@ -141,9 +142,27 @@ class Picking(models.Model):
         target_path = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_dir_export')
         config = self.get_ftp_config()
 
+        cnopts = pysftp.CnOpts()
+
+        hostkeys = None
+
         myHostname = config.get('host')
         myUsername = config.get('login')
         myPassword = config.get('password')
+
+        if cnopts.hostkeys.lookup(myHostname) == None:
+            print("New host - will accept any host key")
+            # Backup loaded .ssh/known_hosts file
+            hostkeys = cnopts.hostkeys
+            # And do not verify host key of the new host
+            cnopts.hostkeys = None
+
+        with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
+            if hostkeys is not None:
+                print("Connected to new host, caching its hostkey")
+                hostkeys.add(myHostname, sftp.remote_server_key.get_name(), sftp.remote_server_key)
+                hostkeys.save(pysftp.helpers.known_hosts())
+
         try:
             with pysftp.Connection(myHostname, username=myUsername, password=myPassword) as sftp:
                 directory_structure = sftp.listdir_attr()
@@ -169,7 +188,7 @@ class Picking(models.Model):
         return True
 
     def action_done(self):
-        #TODO: new picking will be created when Shipping cost is add, how to handle this case for TOD
+        # TODO: new picking will be created when Shipping cost is add, how to handle this case for TOD
         res = super(Picking, self).action_done()
         for pick in self:
             if pick.picking_type_id.send_email:
@@ -219,7 +238,7 @@ class Picking(models.Model):
                     else:
                         _logger.warning(_(
                             'No Sale Order Line with additional shipping cost added to %s from Broker Shipping Import because no Sale Order or product associated.'),
-                                        delivery_order_id.name)
+                            delivery_order_id.name)
                 else:
                     _logger.warning(
                         _('No Delivery Order with Name,%s, found. Shipping Broker information not imported'), do_name)
@@ -238,7 +257,8 @@ class Picking(models.Model):
                     print(sftp.pwd)
                     sftp.get_d(target_path, temp_dir, preserve_mtime=True)
             except Exception:
-                _logger.warning(_('Connection failed to %s with User, %s,from Broker Shipping SFTP.'), myHostname, myUsername)
+                _logger.warning(_('Connection failed to %s with User, %s,from Broker Shipping SFTP.'), myHostname,
+                                myUsername)
 
             print(os.listdir(temp_dir))
             for filename in os.listdir(temp_dir):
