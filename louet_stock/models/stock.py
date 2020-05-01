@@ -6,7 +6,10 @@ import xlrd
 import base64
 import logging
 import os
+import paramiko
 import pysftp
+
+from base64 import decodebytes
 from tempfile import TemporaryDirectory
 
 from odoo import api, fields, models, _
@@ -142,29 +145,38 @@ class Picking(models.Model):
         target_path = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_dir_export')
         config = self.get_ftp_config()
 
+        keydata = b"""AAAAB3NzaC1yc2EAAAADAQABAAABAQDk7ZSzE4vqFaZoLCpErMNFz81iT+EIXifOT+TYwPozcq16lOWUAa2EyG/xSAK5l5otYG8fdTt8H8HeDYKaxWo4vQ2bLNuiVUlGTUAUxjxhAZGJzed/gfID/RnOStnabZIT9ElOObv5U0ZKgDrvsbjbB8Y51XxfwaqqXtIq/WIIstpX4sjTOpM3YmuY8OLbd/p0SQcjTg5PFlIgQuRX8hOo811lQzbp9t2QsUEhMcKGAPsRCM/nbn3p8/JD0nc3PtjKolrLfsBaR9aDwkV/b9SprpcBXrVvmHIhg5qjt88r7QW0f8MJiYkuQsG80g7VtlKf+OUGTR93+hNrXSmZp5F3"""
+        key = paramiko.RSAKey(data=decodebytes(keydata))
         cnopts = pysftp.CnOpts()
+        cnopts.hostkeys.add('sfidata.exavault.com', 'ssh-rsa', key)
 
-        hostkeys = None
+        # hostkeys = None
 
         myHostname = config.get('host')
         myUsername = config.get('login')
         myPassword = config.get('password')
 
-        if cnopts.hostkeys.lookup(myHostname) == None:
-            print("New host - will accept any host key")
-            # Backup loaded .ssh/known_hosts file
-            hostkeys = cnopts.hostkeys
-            # And do not verify host key of the new host
-            cnopts.hostkeys = None
+        # keys = cnopts.hostkeys.lookup(myHostname)
+
+        # if cnopts.hostkeys.lookup(myHostname) == None:
+        #     print("New host - will accept any host key")
+        #     # Backup loaded .ssh/known_hosts file
+        #     hostkeys = cnopts.hostkeys
+        #     # And do not verify host key of the new host
+        #     cnopts.hostkeys = None
 
         with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
-            if hostkeys is not None:
-                print("Connected to new host, caching its hostkey")
-                hostkeys.add(myHostname, sftp.remote_server_key.get_name(), sftp.remote_server_key)
-                hostkeys.save(pysftp.helpers.known_hosts())
+            print(sftp.remote_server_key.get_name())
+            print(sftp.remote_server_key)
+            print(sftp.pwd)
+
+            # if hostkeys is not None:
+            #     print("Connected to new host, caching its hostkey")
+            #     hostkeys.add(myHostname, sftp.remote_server_key.get_name(), sftp.remote_server_key)
+            #     hostkeys.save(pysftp.helpers.known_hosts())
 
         try:
-            with pysftp.Connection(myHostname, username=myUsername, password=myPassword) as sftp:
+            with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
                 directory_structure = sftp.listdir_attr()
                 for attr in directory_structure:
                     print(attr.filename, attr)
