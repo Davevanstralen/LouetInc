@@ -101,7 +101,7 @@ class Picking(models.Model):
 
     # Create xls file for broker report
     def create_broker_report(self):
-        report_name = '{company}_{transfer}_shipping_{date}'.format(company=self.company_id.name,
+        report_name = '{company}_{transfer}_shipping_{date}'.format(company=self.company_id.name.replace(' ', ''),
                                                                     transfer=self.name.replace('/', ''),
                                                                     date=datetime.now().strftime("%Y_%m_%d"))
         filename = "%s.%s" % (report_name, "csv")
@@ -116,7 +116,7 @@ class Picking(models.Model):
                           'bill_freight_to_address1', 'bill_freight_to_city', 'bill_freight_to_state_province',
                           'bill_freight_to_postal_code', 'bill_freight_to_country', 'deliver_by_date', 'line_number',
                           'part_number', 'part_description', 'quantity_ordered', 'unit_price', 'database_type']
-            print(len(fieldnames))
+            # print(len(fieldnames))
             writer = csv.DictWriter(broker_file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(self.create_csv_data())
@@ -130,7 +130,12 @@ class Picking(models.Model):
             'res_id': self.id,
             'type': 'binary',  # override default_type from context, possibly meant for another model!
         })
-        print(attachment)
+        try:
+            os.remove(filename)
+        except Exception:
+            _logger.warn("Failed to remove '%s' from directory but '%s' attachment is still created.",
+                         filename, attachment.name_get())
+        # print(attachment)
         return attachment
 
     def get_ftp_config(self):
@@ -139,41 +144,21 @@ class Picking(models.Model):
                 'login': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_login_broker'),
                 'password': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_password_broker'),
                 'repin': '/',
+                'public_key': self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_public_key_broker'),
                 }
 
     def export_ftp_report(self, attachment_id):
         target_path = self.env['ir.config_parameter'].sudo().get_param('louet_stock.ftp_dir_export')
         config = self.get_ftp_config()
 
-        keydata = b"""AAAAB3NzaC1yc2EAAAADAQABAAABAQDk7ZSzE4vqFaZoLCpErMNFz81iT+EIXifOT+TYwPozcq16lOWUAa2EyG/xSAK5l5otYG8fdTt8H8HeDYKaxWo4vQ2bLNuiVUlGTUAUxjxhAZGJzed/gfID/RnOStnabZIT9ElOObv5U0ZKgDrvsbjbB8Y51XxfwaqqXtIq/WIIstpX4sjTOpM3YmuY8OLbd/p0SQcjTg5PFlIgQuRX8hOo811lQzbp9t2QsUEhMcKGAPsRCM/nbn3p8/JD0nc3PtjKolrLfsBaR9aDwkV/b9SprpcBXrVvmHIhg5qjt88r7QW0f8MJiYkuQsG80g7VtlKf+OUGTR93+hNrXSmZp5F3"""
-        key = paramiko.RSAKey(data=decodebytes(keydata))
-        cnopts = pysftp.CnOpts()
-        cnopts.hostkeys.add('sfidata.exavault.com', 'ssh-rsa', key)
-
-        # hostkeys = None
-
         myHostname = config.get('host')
         myUsername = config.get('login')
         myPassword = config.get('password')
+        keydata = config.get('public_key').encode()
 
-        # keys = cnopts.hostkeys.lookup(myHostname)
-
-        # if cnopts.hostkeys.lookup(myHostname) == None:
-        #     print("New host - will accept any host key")
-        #     # Backup loaded .ssh/known_hosts file
-        #     hostkeys = cnopts.hostkeys
-        #     # And do not verify host key of the new host
-        #     cnopts.hostkeys = None
-
-        with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
-            print(sftp.remote_server_key.get_name())
-            print(sftp.remote_server_key)
-            print(sftp.pwd)
-
-            # if hostkeys is not None:
-            #     print("Connected to new host, caching its hostkey")
-            #     hostkeys.add(myHostname, sftp.remote_server_key.get_name(), sftp.remote_server_key)
-            #     hostkeys.save(pysftp.helpers.known_hosts())
+        key = paramiko.RSAKey(data=decodebytes(keydata))
+        cnopts = pysftp.CnOpts()
+        cnopts.hostkeys.add(myHostname, 'ssh-rsa', key)
 
         try:
             with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
@@ -263,9 +248,13 @@ class Picking(models.Model):
         myHostname = config.get('host')
         myUsername = config.get('login')
         myPassword = config.get('password')
+        keydata = config.get('public_key').encode()
+        key = paramiko.RSAKey(data=decodebytes(keydata))
+        cnopts = pysftp.CnOpts()
+        cnopts.hostkeys.add(myHostname, 'ssh-rsa', key)
         with TemporaryDirectory() as temp_dir:
             try:
-                with pysftp.Connection(myHostname, username=myUsername, password=myPassword) as sftp:
+                with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
                     print(sftp.pwd)
                     sftp.get_d(target_path, temp_dir, preserve_mtime=True)
             except Exception:

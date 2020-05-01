@@ -23,6 +23,9 @@ class ResConfigSettings(models.TransientModel):
                                    config_parameter='louet_stock.ftp_login_broker')
     ftp_password_broker = fields.Char(string='Password', required=True, default='',
                                       config_parameter='louet_stock.ftp_password_broker')
+    ftp_public_key_broker = fields.Char(string='Public Key', required=True, default='',
+                                        config_parameter='louet_stock.ftp_public_key_broker')
+
     # export to Broker, import from Broker
     ftp_dir_export = fields.Char(string='Export Directory',
                                  config_parameter='louet_stock.ftp_dir_export',
