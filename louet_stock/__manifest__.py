@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Louet Inc.: Shipping Details CSV in Email",
+    'name': "Louet Inc.: Shipping Broker Files",
 
     'summary': """
         Louet Inc. ships all its products through a shipping broker. They need Request pickup of a shipment and Receive back cost and tracking information related to a shipment.""",
 
     'description': """
-CIC - 
+CIC - [2178896]
     
 1.1. On validation of a picking (as specified in 1.2), an email is sent out to an email alias of the broker with a CSV file containing the fields highlighted in the attached file "Odoo Mapping.xlsl". I have mapped the broker's system's fields to Odoo's fields. The alias will be provided at a future date.
 
@@ -16,9 +16,17 @@ CIC -
 
 3. The broker's system will report when an email was received successfully. This message should be shown in the chatter of the final delivery order as a message" Your shipment request has been successfully received".
 
+New requests:
+Sending Information: 
 
+Initially, the plan was to send the CSV file containing the information to a specific email alias. However, now due to a system change, we will need to upload this file to an FTP server ( FSTP ) of Ebridge. The trigger point is the same as above  -  When a picking slip to transfer products to WH/Output is validated. 
 
-Shipping Contact Details:-  it-support@sfi.ca  
+Ebridge website - http://www.ebridge.com
+
+Receiving Information:- Extra 8 hours
+When the delivery is made in the real world, Ebridge will upload the information on a file with the Delivery Order Number ( Primary Key), Tracking Number, Carrier Name and Shipping cost will be read A shipping cost line item will be added on that specific SO. I am still waiting on the file type information. Refer to the below Technical Support ticket for this information: 
+
+Currently, the " Tracking Number" and " Carrier Name" field is being populated on the Pick Slip. This requires to be populated on the Delivery Warehouse Slip ( WH/OUT/ ****) so that the shipping email that gets sent automatically upon validation contains the information. 
 
     """,
 

@@ -8,6 +8,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='show_operations']" position="after">
                     <field name="send_email"/>
+                    <field name="set_carrier"/>
                 </xpath>
             </field>
         </record>
@@ -19,7 +20,6 @@
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='extra']//group[1]" position="inside">
                     <group string="Broker Shipping Information">
-<!--                        <field name="delivery_number"/>-->
                         <field name="carrier_name"/>
                     </group>
                 </xpath>
