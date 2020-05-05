@@ -198,6 +198,8 @@ class Picking(models.Model):
         cnopts.hostkeys.add(myHostname, 'ssh-rsa', key)
 
         with pysftp.Connection(myHostname, username=myUsername, password=myPassword, cnopts=cnopts) as sftp:
+            sftp.cwd(target_path)
+
             if attachment_id:
                 # get attachment name
                 filename = attachment_id.name
