@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="schedule_action_update_attributes_luonto" model="ir.cron">
+            <field name="name">Transfer: Sync Import Shipping Broker Files</field>
+            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="state">code</field>
+            <field name="code">
+log("Transfer: Sync Import Shipping Broker Files last ran on "+ str(datetime.datetime.now()), level='info')
+model.get_broker_files()
+            </field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 02:00:00')" />
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>
