@@ -44,7 +44,6 @@ Currently, the " Tracking Number" and " Carrier Name" field is being populated o
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
         'views/stock_views.xml',
         'views/product_views.xml',

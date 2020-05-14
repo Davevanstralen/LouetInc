@@ -114,7 +114,6 @@ class Picking(models.Model):
                          'database_type': self.check_if_production()})
         return rows
 
-    #
     def create_broker_report(self):
         """
         Generate xls file for broker report and create attachment
