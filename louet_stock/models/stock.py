@@ -80,7 +80,7 @@ class Picking(models.Model):
                          'soldto_city': sale_id.partner_id.city or '',
                          'soldto_state_province': sale_id.partner_id.state_id.code or '',
                          'soldto_postal_code': sale_id.partner_id.zip or '',
-                         'soldto_country': sale_id.panamertner_id.country_id.code or '',
+                         'soldto_country': sale_id.partner_id.country_id.code or '',
                          # 'soldto_contact_name': '',
                          # 'soldto_telephone': '',
                          # 'soldto_contact_email': '',
