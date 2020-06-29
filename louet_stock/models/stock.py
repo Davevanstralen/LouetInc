@@ -129,7 +129,7 @@ class Picking(models.Model):
                 'part_number': line.product_id.default_code or '',
                 'part_description': line.product_id.name or '',
                 'quantity_ordered': line.qty_done,
-                'quantity_shipped': '',
+                'quantity_shipped': line.qty_done,
                 'unit_price': line.move_id.sale_line_id.price_unit,
                 'extended_price': '',
                 'lineitem_comment': self.check_if_production(),
