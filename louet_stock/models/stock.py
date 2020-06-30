@@ -70,48 +70,72 @@ class Picking(models.Model):
         sale_id = self.group_id.sale_id
         rows = []
         for line in self.move_line_ids_without_package:
-            rows.append({'number': self.name or '',
-                         # 'date': sale_id.date_order,
-                         # 'sales_order_number': sale_id.name,
-                         'currency': sale_id.currency_id.name or '',
-                         'soldto_company': sale_id.partner_id.name or '',
-                         'soldto_address1': sale_id.partner_id.street or '',
-                         # 'soldto_address2': '',
-                         'soldto_city': sale_id.partner_id.city or '',
-                         'soldto_state_province': sale_id.partner_id.state_id.code or '',
-                         'soldto_postal_code': sale_id.partner_id.zip or '',
-                         'soldto_country': sale_id.partner_id.country_id.code or '',
-                         # 'soldto_contact_name': '',
-                         # 'soldto_telephone': '',
-                         # 'soldto_contact_email': '',
-                         'soldto_tax_id': sale_id.partner_id.vat or '',
-                         'shipto_company': sale_id.partner_invoice_id.name or '',
-                         'shipto_address1': sale_id.partner_invoice_id.street or '',
-                         # 'shipto_address2': '',
-                         'shipto_city': sale_id.partner_invoice_id.city or '',
-                         'shipto_state_provice': sale_id.partner_invoice_id.state_id.code or '',
-                         'shipto_postal_code': sale_id.partner_invoice_id.zip or '',
-                         'shipto_country': sale_id.partner_invoice_id.country_id.code or '',
-                         # 'soldto_contact_name': '',
-                         # 'shipto_contact_telephone': '',
-                         # 'shipto_contact_email': '',
-                         'shipto_tax_id': sale_id.partner_invoice_id.vat or '',
-                         'bill_freight_to_company': sale_id.partner_shipping_id.name or '',
-                         'bill_freight_to_address1': sale_id.partner_shipping_id.street or '',
-                         # 'bill_freight_to_address2': '',
-                         'bill_freight_to_city': sale_id.partner_shipping_id.city or '',
-                         'bill_freight_to_state_province': sale_id.partner_shipping_id.state_id.code or '',
-                         'bill_freight_to_postal_code': sale_id.partner_shipping_id.zip or '',
-                         'bill_freight_to_country': sale_id.partner_shipping_id.country_id.code or '',
-                         # 'ship_by_date': '',
-                         'deliver_by_date': sale_id.commitment_date or '',
-                         'line_number': line.id or '',
-                         'part_number': line.product_id.default_code or '',
-                         'part_description': line.product_id.name or '',
-                         'quantity_ordered': line.qty_done,
-                         # 'quantity_shiped': '',
-                         'unit_price': line.move_id.sale_line_id.price_unit,
-                         'database_type': self.check_if_production()})
+            rows.append({
+                'number': self.name or '',
+                'date': '',
+                'sales_order_number': '',
+                'purchase_order_number': '',
+                'freight_billing': '',
+                'carrier_account_number': '',
+                'ship_via': '',
+                'carrierserviceid': '',
+                'currency': sale_id.currency_id.name or '',
+                'sales_person_code': '',
+                'backorders_accepted': '',
+                'warehouse': '',
+                'identity': '',
+                'soldto_company': sale_id.partner_id.name or '',
+                'soldto_address1': sale_id.partner_id.street or '',
+                'soldto_address2': '',
+                'soldto_city': sale_id.partner_id.city or '',
+                'soldto_state_province': sale_id.partner_invoice_id.state_id.code or '',
+                'soldto_postal_code': sale_id.partner_id.zip or '',
+                'soldto_country': sale_id.partner_id.country_id.code or '',
+                'soldto_contact_name': '',
+                'soldto_contact_telephone': '',
+                'soldto_contact_email': '',
+                'soldto_tax_id': sale_id.partner_id.vat or '',
+                'soldto_reference_number': '',
+                'shipto_company': sale_id.partner_invoice_id.name or '',
+                'shipto_address1': sale_id.partner_invoice_id.street or '',
+                'shipto_address2': '',
+                'shipto_city': sale_id.partner_invoice_id.city or '',
+                'shipto_state_province': sale_id.partner_invoice_id.state_id.code or '',
+                'shipto_postal_code': sale_id.partner_invoice_id.zip or '',
+                'shipto_country': sale_id.partner_invoice_id.country_id.code or '',
+                'shipto_contact_name': '',
+                'shipto_contact_telephone': '',
+                'shipto_contact_email': '',
+                'shipto_tax_id': sale_id.partner_invoice_id.vat or '',
+                'bill_freight_to_company': sale_id.partner_shipping_id.name or '',
+                'bill_freight_to_address1': sale_id.partner_shipping_id.street or '',
+                'bill_freight_to_address2': '',
+                'bill_freight_to_city': sale_id.partner_shipping_id.city or '',
+                'bill_freight_to_state_province': sale_id.partner_shipping_id.state_id.code or '',
+                'bill_freight_to_postal_code': sale_id.partner_shipping_id.zip or '',
+                'bill_freight_to_country': sale_id.partner_shipping_id.country_id.code or '',
+                'ship_by_date': '',
+                'deliver_by_date': sale_id.commitment_date or '',
+                'cancel_by_date': '',
+                'bill_duties_and_taxes_to': '',
+                'seller_and_buyer_are_related': '',
+                'comment': '',
+                'terms_of_sale': '',
+                'commercial_payment_terms': '',
+                'freight_amount': '',
+                'cod_amount': '',
+                'commercial_paid_amount': '',
+                'line_number': line.id or '',
+                'part_number': line.product_id.default_code or '',
+                'part_description': line.product_id.name or '',
+                'quantity_ordered': line.qty_done,
+                'quantity_shipped': line.qty_done,
+                'unit_price': line.move_id.sale_line_id.price_unit,
+                'extended_price': '',
+                'lineitem_comment': self.check_if_production(),
+                'lineitem_country_origin': '',
+                'serial_number': ''
+            })
         return rows
 
     def create_broker_report(self):
@@ -128,14 +152,23 @@ class Picking(models.Model):
         filename = "%s.%s" % (report_name, "csv")
 
         with open(filename, mode='w') as broker_file:
-            # fieldnames = ['number', 'date', 'sales_order_number', 'currency', 'soldto_company', 'soldto_address1', 'soldto_address2', 'soldto_city', 'soldto_state_province', 'soldto_postal_code', 'soldto_country', 'soldto_telephone', 'soldto_contact_email', 'soldto_tax_id', 'shipto_company', 'shipto_address1', 'shipto_address2', 'shipto_city', 'shipto_state_provice', 'shipto_postal_code', 'shipto_country', 'shipto_contact_telephone', 'shipto_contact_email', 'shipto_tax_id', 'ship_by_date', 'deliver_by_date', 'line_number', 'part_number', 'part_description', 'quantity_ordered', 'quantity_shiped', 'unit_price', 'database_type']
-            fieldnames = ['number', 'currency', 'soldto_company', 'soldto_address1', 'soldto_city',
-                          'soldto_state_province', 'soldto_postal_code', 'soldto_country', 'soldto_tax_id',
-                          'shipto_company', 'shipto_address1', 'shipto_city', 'shipto_state_provice',
-                          'shipto_postal_code', 'shipto_country', 'shipto_tax_id', 'bill_freight_to_company',
-                          'bill_freight_to_address1', 'bill_freight_to_city', 'bill_freight_to_state_province',
-                          'bill_freight_to_postal_code', 'bill_freight_to_country', 'deliver_by_date', 'line_number',
-                          'part_number', 'part_description', 'quantity_ordered', 'unit_price', 'database_type']
+            # fieldnames = ['number', 'date', 'sales_order_number', 'currency', 'soldto_company', 'soldto_address1', 'soldto_address2', 'soldto_city', 'soldto_state_province', 'soldto_postal_code', 'soldto_country', 'soldto_telephone', 'soldto_contact_email', 'soldto_tax_id', 'shipto_company', 'shipto_address1', 'shipto_address2', 'shipto_city', 'shipto_state_province', 'shipto_postal_code', 'shipto_country', 'shipto_contact_telephone', 'shipto_contact_email', 'shipto_tax_id', 'ship_by_date', 'deliver_by_date', 'line_number', 'part_number', 'part_description', 'quantity_ordered', 'quantity_shiped', 'unit_price', 'database_type']
+            fieldnames = ['number', 'date', 'sales_order_number', 'purchase_order_number', 'freight_billing',
+                          'carrier_account_number', 'ship_via', 'carrierserviceid', 'currency', 'sales_person_code',
+                          'backorders_accepted', 'warehouse', 'identity', 'soldto_company', 'soldto_address1',
+                          'soldto_address2', 'soldto_city', 'soldto_state_province', 'soldto_postal_code',
+                          'soldto_country', 'soldto_contact_name', 'soldto_contact_telephone', 'soldto_contact_email',
+                          'soldto_tax_id', 'soldto_reference_number', 'shipto_company', 'shipto_address1',
+                          'shipto_address2', 'shipto_city', 'shipto_state_province', 'shipto_postal_code',
+                          'shipto_country', 'shipto_contact_name', 'shipto_contact_telephone', 'shipto_contact_email',
+                          'shipto_tax_id', 'bill_freight_to_company', 'bill_freight_to_address1',
+                          'bill_freight_to_address2', 'bill_freight_to_city', 'bill_freight_to_state_province',
+                          'bill_freight_to_postal_code', 'bill_freight_to_country', 'ship_by_date', 'deliver_by_date',
+                          'cancel_by_date', 'bill_duties_and_taxes_to', 'seller_and_buyer_are_related', 'comment',
+                          'terms_of_sale', 'commercial_payment_terms', 'freight_amount', 'cod_amount',
+                          'commercial_paid_amount', 'line_number', 'part_number', 'part_description', 'quantity_ordered',
+                          'quantity_shipped', 'unit_price', 'extended_price', 'lineitem_comment', 'lineitem_country_origin',
+                          'serial_number']
             writer = csv.DictWriter(broker_file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(self.create_csv_data())
@@ -285,7 +318,8 @@ class Picking(models.Model):
 
                     if sale_order_id:
                         # Find if there is another picking to update carrier info
-                        do_out = sale_order_id.picking_ids.filtered(lambda p: p.picking_type_id.set_carrier and p.state not in ['done', 'cancel'])
+                        do_out = sale_order_id.picking_ids.filtered(
+                            lambda p: p.picking_type_id.set_carrier and p.state not in ['done', 'cancel'])
                         for out in do_out:
                             out.carrier_tracking_ref = str(int(do.get('Shipment_ID', '')))
                             out.carrier_name = str(do.get('Carrier', ''))
