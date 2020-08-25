@@ -2,7 +2,6 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import csv
-import xlrd
 import base64
 import logging
 import os
@@ -103,8 +102,8 @@ class Picking(models.Model):
                 'shipto_state_province': sale_id.partner_shipping_id.state_id.code or '',
                 'shipto_postal_code': sale_id.partner_shipping_id.zip or '',
                 'shipto_country': sale_id.partner_shipping_id.country_id.code or '',
-                'shipto_contact_name': '',
-                'shipto_contact_telephone': '',
+                'shipto_contact_name': sale_id.partner_shipping_id.name or '',
+                'shipto_contact_telephone': sale_id.partner_shipping_id.phone or '',
                 'shipto_contact_email': '',
                 'shipto_tax_id': sale_id.partner_shipping_id.vat or '',
                 'bill_freight_to_company': sale_id.partner_invoice_id.name or '',
@@ -303,36 +302,50 @@ class Picking(models.Model):
         @return None
         """
         for do in data:
-            do_name = do.get('Order', False)
+            do_name = do.get('Customer Reference', False)
+            shipment_id = do.get('Shipment ID', '')
+            carrier_name = do.get('Carrier', '')
+            shipping_cost = do.get('Published charge', False)
+            if shipping_cost:
+                shipping_cost = float(shipping_cost)
+
             if do_name:
                 # Only get DO which match name and have not been read
                 delivery_order_id = self.env['stock.picking'].search(
                     [['name', '=', str(do_name)], ['broker_received', '=', False]], limit=1)
                 if delivery_order_id:
-                    delivery_order_id.carrier_tracking_ref = str(int(do.get('Shipment_ID', '')))
-                    delivery_order_id.carrier_name = str(do.get('Carrier', ''))
+                    delivery_order_id.carrier_tracking_ref = shipment_id
+                    delivery_order_id.carrier_name = carrier_name
 
                     sale_order_id = delivery_order_id.sale_id
                     product_id = self.env['product.product'].search([['is_broker_ship', '=', True]], limit=1)
-                    shipping_cost = do.get('Published_Cost', 0.0)
 
                     if sale_order_id:
                         # Find if there is another picking to update carrier info
                         do_out = sale_order_id.picking_ids.filtered(
                             lambda p: p.picking_type_id.set_carrier and p.state not in ['done', 'cancel'])
                         for out in do_out:
-                            out.carrier_tracking_ref = str(int(do.get('Shipment_ID', '')))
-                            out.carrier_name = str(do.get('Carrier', ''))
+                            out.carrier_tracking_ref = shipment_id
+                            out.carrier_name = carrier_name
                         # if there is a product that has is_broker_ship create SOL
-                        if product_id:
+                        if product_id and shipping_cost:
                             self.create_shipping_cost_line(sale_order_id, product_id, shipping_cost, delivery_order_id)
                     else:
                         _logger.warning(_(
-                            'No Sale Order Line with additional shipping cost added to %s from Broker Shipping Import because no Sale Order or product associated.'),
+                            'No Sale Order Line with additional shipping cost added to %s from Broker Shipping Import because no Sale Order, shipping price, or product associated.'),
                             delivery_order_id.name)
                 else:
                     _logger.warning(
                         _('No Delivery Order with Name,%s, found. Shipping Broker information not imported'), do_name)
+
+    def read_csv_data(self, path):
+        """
+            Reads CSV from given path and Return list of dict with Mapping
+        """
+        with open(path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            data_lines = list(reader)
+        return data_lines
 
     @api.model
     def get_broker_files(self):
@@ -365,19 +378,7 @@ class Picking(models.Model):
                                 myUsername)
             # Check all files that were read
             for filename in os.listdir(temp_dir):
-                workbook = xlrd.open_workbook(os.path.join(temp_dir, filename))
-                sheet = workbook.sheet_by_index(0)
-
-                header_row = []
-                for col in range(sheet.ncols):
-                    header_row.append(sheet.cell_value(0, col))
-
-                # list of 'rows' data, dictionary with keys as header values
-                data = []
-                for row in range(1, sheet.nrows):
-                    value = {}
-                    for col in range(sheet.ncols):
-                        value[header_row[col]] = sheet.cell_value(row, col)
-                    data.append(value)
+                # workbook = xlrd.open_workbook()
+                data = self.read_csv_data(os.path.join(temp_dir, filename))
                 self.process_broker_order(data)
         return True
