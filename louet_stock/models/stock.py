@@ -382,9 +382,3 @@ class Picking(models.Model):
                 data = self.read_csv_data(os.path.join(temp_dir, filename))
                 self.process_broker_order(data)
         return True
-
-    # def test_read_file(self):
-    #     data = self.read_csv_data("/home/cindey/odoo_git/louet/LouetInc/louet_stock/models/test_broker.csv")
-    #     print("reached here")
-    #
-    #     self.process_broker_order(data)
