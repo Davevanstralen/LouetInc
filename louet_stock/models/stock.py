@@ -113,24 +113,6 @@ class Picking(models.Model):
                 'bill_freight_to_state_province': sale_id.partner_invoice_id.state_id.code or '',
                 'bill_freight_to_postal_code': sale_id.partner_invoice_id.zip or '',
                 'bill_freight_to_country': sale_id.partner_invoice_id.country_id.code or '',
-                # 'shipto_company': sale_id.partner_invoice_id.name or '',
-                # 'shipto_address1': sale_id.partner_invoice_id.street or '',
-                # 'shipto_address2': '',
-                # 'shipto_city': sale_id.partner_invoice_id.city or '',
-                # 'shipto_state_province': sale_id.partner_invoice_id.state_id.code or '',
-                # 'shipto_postal_code': sale_id.partner_invoice_id.zip or '',
-                # 'shipto_country': sale_id.partner_invoice_id.country_id.code or '',
-                # 'shipto_contact_name': '',
-                # 'shipto_contact_telephone': '',
-                # 'shipto_contact_email': '',
-                # 'shipto_tax_id': sale_id.partner_invoice_id.vat or '',
-                # 'bill_freight_to_company': sale_id.partner_shipping_id.name or '',
-                # 'bill_freight_to_address1': sale_id.partner_shipping_id.street or '',
-                # 'bill_freight_to_address2': '',
-                # 'bill_freight_to_city': sale_id.partner_shipping_id.city or '',
-                # 'bill_freight_to_state_province': sale_id.partner_shipping_id.state_id.code or '',
-                # 'bill_freight_to_postal_code': sale_id.partner_shipping_id.zip or '',
-                # 'bill_freight_to_country': sale_id.partner_shipping_id.country_id.code or '',
                 'ship_by_date': '',
                 'deliver_by_date': sale_id.commitment_date or '',
                 'cancel_by_date': '',
@@ -400,9 +382,3 @@ class Picking(models.Model):
                 data = self.read_csv_data(os.path.join(temp_dir, filename))
                 self.process_broker_order(data)
         return True
-
-    # def test_read_file(self):
-    #     data = self.read_csv_data("/home/cindey/odoo_git/louet/LouetInc/louet_stock/models/test_broker.csv")
-    #     print("reached here")
-    #
-    #     self.process_broker_order(data)
