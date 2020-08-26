@@ -285,7 +285,9 @@ class Picking(models.Model):
             "order_id": sale_order_id.id,
             "product_id": product_id.id,
             # Shipping Cost Line item =  Cost Returned by Shipping Broker + $3.00 (fixed)  + (0.01 * order value without shipping)
-            "price_unit": float_round(shipping_cost + 3.00 + (0.01 * no_ship_total), precision_rounding=rounding)
+            "price_unit": float_round(shipping_cost + 3.00 + (0.01 * no_ship_total), precision_rounding=rounding),
+            "product_uom_qty": 1.0,
+            "qty_delivered": 1.0,
         }])
         if order_line_id:
             # after successful shipping charge and read, change boolean to true to avoid duplicates
@@ -382,9 +384,3 @@ class Picking(models.Model):
                 data = self.read_csv_data(os.path.join(temp_dir, filename))
                 self.process_broker_order(data)
         return True
-
-    # def test_read_file(self):
-    #     data = self.read_csv_data("/home/cindey/odoo_git/louet/LouetInc/louet_stock/models/test_broker.csv")
-    #     print("reached here")
-    #
-    #     self.process_broker_order(data)
