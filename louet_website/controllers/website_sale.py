@@ -15,3 +15,10 @@ class WebsiteSaleInherit(WebsiteSale):
         if request.session.uid:
             return res
         return http.redirect_with_hash('/')
+
+    @http.route(['/shop/product/<model("product.template"):product>'], type='http', auth="public", website=True)
+    def product(self, product, category='', search='', **kwargs):
+        res = super(WebsiteSaleInherit, self).product(product, category, search, **kwargs)
+        if request.session.uid:
+            return res
+        return http.redirect_with_hash('/')
