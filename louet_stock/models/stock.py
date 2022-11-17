@@ -23,7 +23,7 @@ class StockMove(models.Model):
 
     def _prepare_procurement_values(self):
         # Calling super, sale_line_id does not get set for procurements that are run from another procurement
-        res = super(StockMove, self)._prepare_procurement_values()
+        res = super()._prepare_procurement_values()
         res.update({'sale_line_id': self.sale_line_id.id})
         return res
 
@@ -244,7 +244,7 @@ class Picking(models.Model):
                                  attachment_id.name, self.id)
         return True
 
-    def action_done(self):
+    def _action_done(self):
         """
         Call super on action done to send the csv
 
@@ -252,7 +252,7 @@ class Picking(models.Model):
 
         @return res: result of the action_done super call
         """
-        res = super(Picking, self).action_done()
+        res = super()._action_done()
         for pick in self:
             if pick.picking_type_id.send_email:
                 attachment_id = pick.create_broker_report()

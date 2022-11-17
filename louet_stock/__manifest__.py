@@ -49,5 +49,5 @@ Currently, the " Tracking Number" and " Carrier Name" field is being populated o
         'views/product_views.xml',
         'data/actions.xml',
     ],
-    'license': 'OEEL-1',
+    'license': 'OPL-1',
 }
