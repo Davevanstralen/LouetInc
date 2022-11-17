@@ -3,7 +3,7 @@
     'name': 'Louet Inc: Block E-commerce/ Shop Menu & its Sub-Menus from public users.',
     'summary': 'Restricting the website shop page access to public users',
     'sequence': 100,
-    'license': 'OEEL-1',
+    'license': 'OPL-1',
     'website': 'https://www.odoo.com',
     'version': '1.1',
     'author': 'Odoo Inc',
