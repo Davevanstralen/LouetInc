@@ -12,7 +12,7 @@ from base64 import decodebytes
 from tempfile import TemporaryDirectory
 
 from odoo import api, fields, models, _
-from datetime import datetime, timedelta
+from datetime import datetime
 from odoo.tools.float_utils import float_round
 
 _logger = logging.getLogger(__name__)

@@ -2,20 +2,12 @@ odoo.define('website_sale_qoh.VariantMixin', function (require) {
 'use strict';
 
 const {Markup} = require('web.utils');
-var VariantMixin = require('sale.VariantMixin');
-var publicWidget = require('web.public.widget');
 var website_sale_stock_VariantMixin = require('website_sale_stock.VariantMixin')
-var ajax = require('web.ajax');
 var core = require('web.core');
 var QWeb = core.qweb;
 
-const loadXml = async () => {
-    return ajax.loadXML('/website_sale_qoh/static/src/xml/website_sale_stock_product_availability.xml', QWeb);
-};
-
 website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $parent, combination) {
     let product_id = 0;
-    // needed for list view of variants
     if ($parent.find('input.product_id:checked').length) {
         product_id = $parent.find('input.product_id:checked').val();
     } else {
@@ -31,9 +23,10 @@ website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $paren
 
     const $addQtyInput = $parent.find('input[name="add_qty"]');
     let qty = $addQtyInput.val();
+    let ctaWrapper = $parent[0].querySelector('#o_wsale_cta_wrapper');
+    ctaWrapper.classList.replace('d-none', 'd-flex');
+    ctaWrapper.classList.remove('out_of_stock');
 
-    $parent.find('#add_to_cart').removeClass('out_of_stock');
-    $parent.find('.o_we_buy_now').removeClass('out_of_stock');
     if (combination.product_type === 'product' && !combination.allow_out_of_stock_order) {
         combination.free_qty -= parseInt(combination.cart_qty);
         $addQtyInput.data('max', combination.free_qty || 1);
@@ -45,32 +38,24 @@ website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $paren
             $addQtyInput.val(qty);
         }
         if (combination.free_qty < 1) {
-            $parent.find('#add_to_cart').addClass('disabled out_of_stock');
-            $parent.find('.o_we_buy_now').addClass('disabled out_of_stock');
+            ctaWrapper.classList.replace('d-flex', 'd-none');
+            ctaWrapper.classList.add('out_of_stock');
         }
     }
 
     if (combination.product_type === 'product' && combination.allow_out_of_stock_order) {
         combination.free_qty -= parseInt(combination.cart_qty);
     }
-    ajax.loadXML(
-    '/website_sale_qoh/static/src/xml/website_sale_stock_product_availability.xml',
-    QWeb
-    );
 
-    loadXml().then(function (result) {
-        $('.oe_website_sale')
-            .find('.availability_message_' + combination.product_template)
-            .remove();
-        combination.has_out_of_stock_message = $(combination.out_of_stock_message).text() !== '';
-        combination.out_of_stock_message = Markup(combination.out_of_stock_message);
-        const $message = $(QWeb.render(
-            'website_sale_stock.product_availability',
-            combination
-        ));
-        $('div.availability_messages').html($message);
-    });
+    $('.oe_website_sale')
+        .find('.availability_message_' + combination.product_template)
+        .remove();
+    combination.has_out_of_stock_message = $(combination.out_of_stock_message).text() !== '';
+    combination.out_of_stock_message = Markup(combination.out_of_stock_message);
+    const $message = $(QWeb.render(
+        'website_sale_stock.product_availability',
+        combination
+    ));
+    $('div.availability_messages').html($message);
 };
-
-
 });

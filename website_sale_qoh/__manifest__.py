@@ -6,7 +6,7 @@
     'sequence': 100,
     'license': 'OPL-1',
     'website': 'https://www.odoo.com',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Odoo Inc',
     'description': """
 eCommerce Qty On Hand
@@ -21,6 +21,7 @@ eCommerce Qty On Hand
     'assets': {
         'web.assets_frontend': [
             'website_sale_qoh/static/src/js/**/*',
+            'website_sale_qoh/static/src/xml/**/*',
         ],
     },
 }
