@@ -151,7 +151,6 @@ class Picking(models.Model):
         filename = "%s.%s" % (report_name, "csv")
 
         with open(filename, mode='w') as broker_file:
-            # fieldnames = ['number', 'date', 'sales_order_number', 'currency', 'soldto_company', 'soldto_address1', 'soldto_address2', 'soldto_city', 'soldto_state_province', 'soldto_postal_code', 'soldto_country', 'soldto_telephone', 'soldto_contact_email', 'soldto_tax_id', 'shipto_company', 'shipto_address1', 'shipto_address2', 'shipto_city', 'shipto_state_province', 'shipto_postal_code', 'shipto_country', 'shipto_contact_telephone', 'shipto_contact_email', 'shipto_tax_id', 'ship_by_date', 'deliver_by_date', 'line_number', 'part_number', 'part_description', 'quantity_ordered', 'quantity_shiped', 'unit_price', 'database_type']
             fieldnames = ['number', 'date', 'sales_order_number', 'purchase_order_number', 'freight_billing',
                           'carrier_account_number', 'ship_via', 'carrierserviceid', 'currency', 'sales_person_code',
                           'backorders_accepted', 'warehouse', 'identity', 'soldto_company', 'soldto_address1',
