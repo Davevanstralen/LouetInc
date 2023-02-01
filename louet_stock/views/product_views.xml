@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="view_picking_type_form_louet" model="ir.ui.view">
-            <field name="name">product.product.form.inherit.louet</field>
-            <field name="model">product.product</field>
-            <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="priority">200</field>
-            <field name="arch" type="xml">
-                <xpath expr="//notebook//page[@name='general_information']//group[@name='group_general']" position="inside">
-                    <field name="is_broker_ship"/>
-                </xpath>
-            </field>
-        </record>
-    </data>
+    <record id="view_picking_type_form_louet" model="ir.ui.view">
+        <field name="name">product.product.form.inherit.louet</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="priority">200</field>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook//page[@name='general_information']//group[@name='group_general']" position="inside">
+                <field name="is_broker_ship"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
