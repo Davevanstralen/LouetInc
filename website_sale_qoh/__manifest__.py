@@ -13,15 +13,15 @@ eCommerce Qty On Hand
 =====================
     """,
     'category': 'Custom Development',
-    'depends': ['sale', 'website_sale', 'website_sale_stock'],
+    'depends': ['website_sale_stock'],
     'demo': [],
     'installable': True,
     'application': False,
     'auto_install': False,
     'assets': {
         'web.assets_frontend': [
-            'website_sale_qoh/static/src/js/**/*',
-            'website_sale_qoh/static/src/xml/**/*',
+            'website_sale_qoh/static/src/js/*',
+            'website_sale_qoh/static/src/xml/*',
         ],
     },
 }

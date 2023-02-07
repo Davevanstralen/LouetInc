@@ -7,17 +7,17 @@
                     <i class="fa fa-exclamation-triangle" title="Warning" role="img" aria-label="Warning"/>
                     <t t-out="free_qty" /> <t t-out="uom_name" /> available
                 </div>
-                <t t-else=''>
+                <t t-else="">
                     <div t-attf-class="availability_message_#{product_template} text-success mt16">
                         <t t-out="free_qty" /> <t t-out="uom_name" /> available
                     </div>
                 </t>
             </t>
             <div t-if="cart_qty" t-attf-class="availability_message_#{product_template} text-warning mt8">
-                <t t-if='!free_qty'>
+                <t t-if="!free_qty">
                     You already added all the available product in your cart.
                 </t>
-                <t t-else=''>
+                <t t-else="">
                     You already added <t t-out="cart_qty" /> <t t-out="uom_name" /> in your cart.
                 </t>
             </div>
