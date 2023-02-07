@@ -1,12 +1,13 @@
-odoo.define('website_sale_qoh.VariantMixin', function (require) {
-'use strict';
+/** @odoo-module **/
 
-const {Markup} = require('web.utils');
-var website_sale_stock_VariantMixin = require('website_sale_stock.VariantMixin')
-var core = require('web.core');
-var QWeb = core.qweb;
+import VariantMixin from "website_sale_stock.VariantMixin";
+import publicWidget from "web.public.widget";
+import core from "web.core";
+import { Markup } from "web.utils";
+import WebsiteSale from "website_sale.website_sale";
+const QWeb = core.qweb;
 
-website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $parent, combination) {
+function updateQuantityLouet(widget, ev, $parent, combination) {
     let product_id = 0;
     if ($parent.find('input.product_id:checked').length) {
         product_id = $parent.find('input.product_id:checked').val();
@@ -17,7 +18,7 @@ website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $paren
         ($parent.is('.js_main_product') || $parent.is('.main_product')) &&
         combination.product_id === parseInt(product_id);
 
-    if (!this.isWebsite || !isMainProduct){
+    if (!widget.isWebsite || !isMainProduct) {
         return;
     }
 
@@ -58,4 +59,10 @@ website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $paren
     ));
     $('div.availability_messages').html($message);
 };
+
+publicWidget.registry.WebsiteSale.include({
+    _onChangeCombination(){
+        this._super.apply(this, arguments);
+        updateQuantityLouet(this, ...arguments);
+    }
 });
