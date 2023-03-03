@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <record id="view_picking_type_louet" model="ir.ui.view">
-            <field name="name">stock.picking.type.view.inherit.louet</field>
-            <field name="model">stock.picking.type</field>
-            <field name="inherit_id" ref="stock.view_picking_type_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='show_operations']" position="after">
-                    <field name="send_email"/>
-                    <field name="set_carrier"/>
-                </xpath>
-            </field>
-        </record>
+    <record id="view_picking_type_louet" model="ir.ui.view">
+        <field name="name">stock.picking.type.view.inherit.louet</field>
+        <field name="model">stock.picking.type</field>
+        <field name="inherit_id" ref="stock.view_picking_type_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='show_operations']" position="after">
+                <field name="send_email"/>
+                <field name="set_carrier"/>
+            </xpath>
+        </field>
+    </record>
 
-        <record id="view_picking_form_louet" model="ir.ui.view">
-            <field name="name">stock.picking.form.inherit.louet</field>
-            <field name="model">stock.picking</field>
-            <field name="inherit_id" ref="stock.view_picking_form"/>
-            <field name="arch" type="xml">
-                <xpath expr="//page[@name='extra']//group[1]" position="inside">
-                    <group string="Broker Shipping Information">
-                        <field name="carrier_name"/>
-                    </group>
-                </xpath>
-            </field>
-        </record>
-    </data>
+    <record id="view_picking_form_louet" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.louet</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='extra']//group[1]" position="inside">
+                <group string="Broker Shipping Information">
+                    <field name="carrier_name"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
 </odoo>

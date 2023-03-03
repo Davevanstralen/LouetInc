@@ -12,7 +12,7 @@ from base64 import decodebytes
 from tempfile import TemporaryDirectory
 
 from odoo import api, fields, models, _
-from datetime import datetime, timedelta
+from datetime import datetime
 from odoo.tools.float_utils import float_round
 
 _logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class StockMove(models.Model):
 
     def _prepare_procurement_values(self):
         # Calling super, sale_line_id does not get set for procurements that are run from another procurement
-        res = super(StockMove, self)._prepare_procurement_values()
+        res = super()._prepare_procurement_values()
         res.update({'sale_line_id': self.sale_line_id.id})
         return res
 
@@ -151,7 +151,6 @@ class Picking(models.Model):
         filename = "%s.%s" % (report_name, "csv")
 
         with open(filename, mode='w') as broker_file:
-            # fieldnames = ['number', 'date', 'sales_order_number', 'currency', 'soldto_company', 'soldto_address1', 'soldto_address2', 'soldto_city', 'soldto_state_province', 'soldto_postal_code', 'soldto_country', 'soldto_telephone', 'soldto_contact_email', 'soldto_tax_id', 'shipto_company', 'shipto_address1', 'shipto_address2', 'shipto_city', 'shipto_state_province', 'shipto_postal_code', 'shipto_country', 'shipto_contact_telephone', 'shipto_contact_email', 'shipto_tax_id', 'ship_by_date', 'deliver_by_date', 'line_number', 'part_number', 'part_description', 'quantity_ordered', 'quantity_shiped', 'unit_price', 'database_type']
             fieldnames = ['number', 'date', 'sales_order_number', 'purchase_order_number', 'freight_billing',
                           'carrier_account_number', 'ship_via', 'carrierserviceid', 'currency', 'sales_person_code',
                           'backorders_accepted', 'warehouse', 'identity', 'soldto_company', 'soldto_address1',
@@ -244,7 +243,7 @@ class Picking(models.Model):
                                  attachment_id.name, self.id)
         return True
 
-    def action_done(self):
+    def _action_done(self):
         """
         Call super on action done to send the csv
 
@@ -252,7 +251,7 @@ class Picking(models.Model):
 
         @return res: result of the action_done super call
         """
-        res = super(Picking, self).action_done()
+        res = super()._action_done()
         for pick in self:
             if pick.picking_type_id.send_email:
                 attachment_id = pick.create_broker_report()
