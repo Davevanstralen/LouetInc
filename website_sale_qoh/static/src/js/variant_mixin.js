@@ -1,75 +1,68 @@
-odoo.define('website_sale_qoh.VariantMixin', function (require) {
-'use strict';
+/** @odoo-module **/
 
-var VariantMixin = require('sale.VariantMixin');
-var publicWidget = require('web.public.widget');
-var website_sale_stock_VariantMixin = require('website_sale_stock.VariantMixin')
-var ajax = require('web.ajax');
-var core = require('web.core');
-var QWeb = core.qweb;
-var xml_load = ajax.loadXML(
-    '/website_sale_qoh/static/src/xml/website_sale_stock_product_availability.xml',
-    QWeb
-);
+import VariantMixin from "website_sale_stock.VariantMixin";
+import publicWidget from "web.public.widget";
+import core from "web.core";
+import { Markup } from "web.utils";
+import WebsiteSale from "website_sale.website_sale";
+const QWeb = core.qweb;
 
-website_sale_stock_VariantMixin._onChangeCombinationStock = function (ev, $parent, combination) {
-    var product_id = 0;
-    // needed for list view of variants
+function updateQuantityLouet(widget, ev, $parent, combination) {
+    let product_id = 0;
     if ($parent.find('input.product_id:checked').length) {
         product_id = $parent.find('input.product_id:checked').val();
     } else {
         product_id = $parent.find('.product_id').val();
     }
-    var isMainProduct = combination.product_id &&
+    const isMainProduct = combination.product_id &&
         ($parent.is('.js_main_product') || $parent.is('.main_product')) &&
         combination.product_id === parseInt(product_id);
 
-    if (!this.isWebsite || !isMainProduct){
+    if (!widget.isWebsite || !isMainProduct) {
         return;
     }
 
-    var qty = $parent.find('input[name="add_qty"]').val();
+    const $addQtyInput = $parent.find('input[name="add_qty"]');
+    let qty = $addQtyInput.val();
+    let ctaWrapper = $parent[0].querySelector('#o_wsale_cta_wrapper');
+    ctaWrapper.classList.replace('d-none', 'd-flex');
+    ctaWrapper.classList.remove('out_of_stock');
 
-    $parent.find('#add_to_cart').removeClass('out_of_stock');
-    $parent.find('#buy_now').removeClass('out_of_stock');
-    if (combination.product_type === 'product' && _.contains(['always', 'threshold'], combination.inventory_availability)) {
-        combination.virtual_available -= parseInt(combination.cart_qty);
-        if (combination.virtual_available < 0) {
-            combination.virtual_available = 0;
+    if (combination.product_type === 'product' && !combination.allow_out_of_stock_order) {
+        combination.free_qty -= parseInt(combination.cart_qty);
+        $addQtyInput.data('max', combination.free_qty || 1);
+        if (combination.free_qty < 0) {
+            combination.free_qty = 0;
         }
-        // Handle case when manually write in input
-        if (qty > combination.virtual_available) {
-            var $input_add_qty = $parent.find('input[name="add_qty"]');
-            qty = combination.virtual_available || 1;
-            $input_add_qty.val(qty);
+        if (qty > combination.free_qty) {
+            qty = combination.free_qty || 1;
+            $addQtyInput.val(qty);
         }
-        if (qty > combination.virtual_available
-            || combination.virtual_available < 1 || qty < 1) {
-            $parent.find('#add_to_cart').addClass('disabled out_of_stock');
-            $parent.find('#buy_now').addClass('disabled out_of_stock');
+        if (combination.free_qty < 1) {
+            ctaWrapper.classList.replace('d-flex', 'd-none');
+            ctaWrapper.classList.add('out_of_stock');
         }
     }
 
-    if (combination.product_type === 'product' && _.contains(['never'], combination.inventory_availability)) {
-        combination.virtual_available -= parseInt(combination.cart_qty);
+    if (combination.product_type === 'product' && combination.allow_out_of_stock_order) {
+        combination.free_qty -= parseInt(combination.cart_qty);
     }
-    ajax.loadXML(
-    '/website_sale_qoh/static/src/xml/website_sale_stock_product_availability.xml',
-    QWeb
-    );
-    xml_load.then(function () {
-        $('.oe_website_sale')
-            .find('.availability_message_' + combination.product_template)
-            .remove();
 
-        var $message = $(QWeb.render(
-            'website_sale_stock.product_availability',
-            combination
-        ));
-        $('div.availability_messages').html($message);
-    });
-
+    $('.oe_website_sale')
+        .find('.availability_message_' + combination.product_template)
+        .remove();
+    combination.has_out_of_stock_message = $(combination.out_of_stock_message).text() !== '';
+    combination.out_of_stock_message = Markup(combination.out_of_stock_message);
+    const $message = $(QWeb.render(
+        'website_sale_stock.product_availability',
+        combination
+    ));
+    $('div.availability_messages').html($message);
 };
 
-
+publicWidget.registry.WebsiteSale.include({
+    _onChangeCombination(){
+        this._super.apply(this, arguments);
+        updateQuantityLouet(this, ...arguments);
+    }
 });
