@@ -1,70 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-        <!--Add configuration fields to the general settings view-->
-        <record id="res_config_settings_view_form_louet" model="ir.ui.view">
-            <field name="name">res.config.settings.view.form.inherit.louet</field>
-            <field name="model">res.config.settings</field>
-            <field name="inherit_id" ref="stock.res_config_settings_view_form"/>
-            <field name="arch" type="xml">
-                <div id="production_lot_info" position="after">
-                    <h2>Shipping Broker Report</h2>
-                    <div class="row mt16 o_settings_container" id="stock_ftp_settings">
-                        <div class="col-12 col-lg-6 o_setting_box"
-                             title="This allows you connect to the ftp server for Broker.">
-                            <div class="o_setting_left_pane"/>
-                            <div class="o_setting_right_pane">
-                                <span class="o_form_label">Broker FTP Credentials</span>
-                                <div class="text-muted">
-                                    For sending and receiving files
+    <!--Add configuration fields to the general settings view-->
+    <record id="res_config_settings_view_form_louet" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.louet</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="stock.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <div id="production_lot_info" position="after">
+                <h2>Shipping Broker Report</h2>
+                <div class="row mt16 o_settings_container" id="stock_ftp_settings">
+                    <div class="col-12 col-lg-6 o_setting_box"
+                            title="This allows you connect to the ftp server for Broker.">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Broker FTP Credentials</span>
+                            <div class="text-muted">
+                                For sending and receiving files
+                            </div>
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="ftp_host_broker" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_host_broker"/>
                                 </div>
-                                <div class="content-group">
-                                    <div class="row mt16">
-                                        <label for="ftp_host_broker" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_host_broker"/>
-                                    </div>
-                                    <div class="row mt16">
-                                        <label for="ftp_port_broker" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_port_broker"/>
-                                    </div>
-                                    <div class="row mt16">
-                                        <label for="ftp_login_broker" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_login_broker"/>
-                                    </div>
-                                    <div class="row mt16">
-                                        <label for="ftp_password_broker" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_password_broker" password="True"/>
-                                    </div>
-                                    <div class="row mt16">
-                                        <label for="ftp_public_key_broker" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_public_key_broker" password="True"/>
-                                    </div>
+                                <div class="row mt16">
+                                    <label for="ftp_port_broker" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_port_broker"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="ftp_login_broker" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_login_broker"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="ftp_password_broker" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_password_broker" password="True"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="ftp_public_key_broker" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_public_key_broker" password="True"/>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-6 o_setting_box"
-                             title="This allows you define directory locations for Broker.">
-                            <div class="o_setting_left_pane"/>
-                            <div class="o_setting_right_pane">
-                                <span class="o_form_label">Broker FTP Directories</span>
-                                <div class="text-muted">
-                                    Full path to folder where you export info to Broker and import info to Odoo
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box"
+                            title="This allows you define directory locations for Broker.">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Broker FTP Directories</span>
+                            <div class="text-muted">
+                                Full path to folder where you export info to Broker and import info to Odoo
+                            </div>
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="ftp_dir_export" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_dir_export"/>
                                 </div>
-                                <div class="content-group">
-                                    <div class="row mt16">
-                                        <label for="ftp_dir_export" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_dir_export"/>
-                                    </div>
-                                    <div class="row mt16">
-                                        <label for="ftp_dir_import" class="col-lg-3 o_light_label"/>
-                                        <field name="ftp_dir_import"/>
-                                    </div>
+                                <div class="row mt16">
+                                    <label for="ftp_dir_import" class="col-lg-3 o_light_label"/>
+                                    <field name="ftp_dir_import"/>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </field>
-        </record>
-    </data>
+            </div>
+        </field>
+    </record>
 </odoo>
