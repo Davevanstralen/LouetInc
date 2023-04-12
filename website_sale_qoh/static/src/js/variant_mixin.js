@@ -59,4 +59,3 @@ odoo.define('website_sale_qoh.VariantMixin', function (require) {
         $('div.availability_messages').html($message);
     };
 });
-    
